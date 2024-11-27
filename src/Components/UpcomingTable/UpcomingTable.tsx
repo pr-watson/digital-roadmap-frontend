@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Badge,
   Bullseye,
@@ -27,7 +27,16 @@ import {
   ToolbarItem,
   ToolbarToggleGroup,
 } from '@patternfly/react-core';
-import { Table, Tbody, Td, Th, Thead, Tr, ExpandableRowContent } from '@patternfly/react-table';
+import {
+  Table,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
+  ExpandableRowContent,
+} from '@patternfly/react-table';
+import { TableRow } from "./UpcomingRow";
 import SearchIcon from '@patternfly/react-icons/dist/esm/icons/search-icon';
 import FilterIcon from '@patternfly/react-icons/dist/esm/icons/filter-icon';
 import './upcoming-table.scss';
@@ -59,19 +68,23 @@ export const UpcomingTable: React.FunctionComponent<UpcomingTableProps> = (
 ) => {
   // Set up repo filtering
   const { data, columnNames } = props;
-  const [searchValue, setSearchValue] = React.useState('');
+  const [searchValue, setSearchValue] = useState('');
   const [dateSelections, setDateSelections] = React.useState<string[]>([]);
   const [releaseSelection, setReleaseSelection] = React.useState('');
 
   // Set up Expandable table
-  const initialExpandedRepoNames = data.filter((repo) => !!repo.details).map((repo) => repo.name); // Default to all expanded
-  const [expandedRepoNames, setExpandedRepoNames] = React.useState<string[]>(initialExpandedRepoNames);
+  const [expandedRepoNames, setExpandedRepoNames] = useState([]);
   const setRepoExpanded = (repo: Record, isExpanding = true) =>
     setExpandedRepoNames((prevExpanded) => {
-      const otherExpandedRepoNames = prevExpanded.filter((r) => r !== repo.name);
-      return isExpanding ? [...otherExpandedRepoNames, repo.name] : otherExpandedRepoNames;
+      const otherExpandedRepoNames = prevExpanded.filter(
+        (r) => r !== repo.name
+      );
+      return isExpanding
+        ? [...otherExpandedRepoNames, repo.name]
+        : otherExpandedRepoNames;
     });
-  const isRepoExpanded = (repo: Record) => expandedRepoNames.includes(repo.name);
+  const isRepoExpanded = (repo: Record) =>
+    expandedRepoNames.includes(repo.name);
 
   const [isExampleCompact, setIsExampleCompact] = React.useState(true);
 
@@ -594,138 +607,31 @@ export const UpcomingTable: React.FunctionComponent<UpcomingTableProps> = (
   return (
     <React.Fragment>
       {toolbar}
-      <Table aria-label="Expandable table" variant={isExampleCompact ? 'compact' : undefined}>
+      <Table
+        aria-label="Expandable table"
+        variant={isExampleCompact ? 'compact' : undefined}
+      >
         <Thead>
           <Tr>
-            <Th width={10}>{columnNames.name}</Th>
+            <Th screenReaderText="Row expansion" />
+            <Th width={30}>{columnNames.name}</Th>
             <Th width={10}>{columnNames.type}</Th>
             <Th width={10}>{columnNames.release}</Th>
-            <Th width={10}>{columnNames.date}</Th>
+            <Th width={20}>{columnNames.date}</Th>
           </Tr>
         </Thead>
         {data.map((repo, rowIndex) => {
-          // Some arbitrary examples of how you could customize the child row based on your needs
-          let childIsFullWidth = false;
-          let childHasNoPadding = false;
-          let detail1Colspan = 1;
-          let detail2Colspan = 1;
-          let detail3Colspan = 1;
-          if (repo.details) {
-            const { summary, potentiallyAffectedSystems, trainingTicket, dateAdded, lastModified, detailFormat } = repo.details;
-            const numColumns = 5;
-            childIsFullWidth = [1, 3].includes(detailFormat);
-            childHasNoPadding = [2, 3].includes(detailFormat);
-            if (summary && !potentiallyAffectedSystems && !trainingTicket) {
-              detail1Colspan = !childIsFullWidth ? numColumns : numColumns + 1; // Account for toggle column
-            } else if (summary && potentiallyAffectedSystems && !trainingTicket) {
-              detail1Colspan = 2;
-              detail2Colspan = !childIsFullWidth ? 3 : 4;
-            } else if (summary && potentiallyAffectedSystems && trainingTicket) {
-              detail1Colspan = 2;
-              detail2Colspan = 2;
-              detail3Colspan = !childIsFullWidth ? 1 : 2;
-            }
-          }
-          console.log(filteredRepos)
           return (
-            <Tbody key={`${repo.name}-${repo.type}-${repo.release}-${repo.date}`} isExpanded={isRepoExpanded(repo)}>
-              {filteredRepos.length > 0 &&
-                filteredRepos.map((repo) => (
-                  <Tr>
-                    <Td
-                      expand={
-                        repo.details
-                          ? {
-                              rowIndex,
-                              isExpanded: isRepoExpanded(repo),
-                              onToggle: () => setRepoExpanded(repo, !isRepoExpanded(repo)),
-                              expandId: 'composable-expandable-example'
-                            }
-                          : undefined
-                      }
-                    />
-                    <Td dataLabel={columnNames.name} modifier="truncate">
-                      {repo.name}
-                    </Td>
-                    <Td dataLabel={columnNames.type} modifier="truncate">
-                      {repo.type}
-                    </Td>
-                    <Td dataLabel={columnNames.release} modifier="truncate">
-                      {repo.release}
-                    </Td>
-                    <Td dataLabel={columnNames.date} modifier="truncate">
-                      {repo.date}
-                    </Td>
-                  </Tr>
-                ))}
-              {filteredRepos.length === 0 && (
-                <Tr>
-                  <Td colSpan={8}>
-                    <Bullseye>{emptyState}</Bullseye>
-                  </Td>
-                </Tr>
-              )}
-              {repo.details ? (
-                <Tr isExpanded={isRepoExpanded(repo)}>
-                  {!childIsFullWidth ? <Td /> : null}
-                  {repo.details.summary ? (
-                    <Td dataLabel="Summary" noPadding={childHasNoPadding} colSpan={detail1Colspan}>
-                      <ExpandableRowContent>{repo.details.summary}</ExpandableRowContent>
-                    </Td>
-                  ) : null}
-                  {repo.details.potentiallyAffectedSystems ? (
-                    <Td dataLabel="Potentially affected systems" noPadding={childHasNoPadding} colSpan={detail2Colspan}>
-                      <ExpandableRowContent>{repo.details.potentiallyAffectedSystems}</ExpandableRowContent>
-                    </Td>
-                  ) : null}
-                  {repo.details.trainingTicket ? (
-                    <Td dataLabel="Training ticket" noPadding={childHasNoPadding} colSpan={detail3Colspan}>
-                      <ExpandableRowContent>{repo.details.trainingTicket}</ExpandableRowContent>
-                    </Td>
-                  ) : null}
-                  {repo.details.dateAdded ? (
-                    <Td dataLabel="Date added" noPadding={childHasNoPadding} colSpan={detail3Colspan}>
-                      <ExpandableRowContent>{repo.details.dateAdded}</ExpandableRowContent>
-                    </Td>
-                  ) : null}
-                  {repo.details.lastModified ? (
-                    <Td dataLabel="Last modified" noPadding={childHasNoPadding} colSpan={detail3Colspan}>
-                      <ExpandableRowContent>{repo.details.lastModified}</ExpandableRowContent>
-                    </Td>
-                  ) : null}
-                </Tr>
-              ) : null}
-            </Tbody>
+            <TableRow
+              repo={repo}
+              columnNames={columnNames}
+              rowIndex={rowIndex}
+            />
           );
         })}
-        {/*<Tbody>*/}
-        {/*  {filteredRepos.length > 0 &&*/}
-        {/*    filteredRepos.map((repo) => (*/}
-        {/*      <Tr key={`${repo.name}-${repo.type}-${repo.release}-${repo.date}`}>*/}
-        {/*        <Td dataLabel={columnNames.name} modifier="truncate">*/}
-        {/*          {repo.name}*/}
-        {/*        </Td>*/}
-        {/*        <Td dataLabel={columnNames.type} modifier="truncate">*/}
-        {/*          {repo.type}*/}
-        {/*        </Td>*/}
-        {/*        <Td dataLabel={columnNames.release} modifier="truncate">*/}
-        {/*          {repo.release}*/}
-        {/*        </Td>*/}
-        {/*        <Td dataLabel={columnNames.date} modifier="truncate">*/}
-        {/*          {repo.date}*/}
-        {/*        </Td>*/}
-        {/*      </Tr>*/}
-        {/*    ))}*/}
-        {/*  {filteredRepos.length === 0 && (*/}
-        {/*    <Tr>*/}
-        {/*      <Td colSpan={8}>*/}
-        {/*        <Bullseye>{emptyState}</Bullseye>*/}
-        {/*      </Td>*/}
-        {/*    </Tr>*/}
-        {/*  )}*/}
-        {/*</Tbody>*/}
+
       </Table>
-       Bottom Pagination
+      Bottom Pagination
       <Pagination
         variant={PaginationVariant.bottom}
         titles={{ paginationAriaLabel: 'Attribute search pagination' }}
