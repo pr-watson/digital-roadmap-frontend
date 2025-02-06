@@ -27,24 +27,24 @@ import { getLifecycleAppstreams, getLifecycleSystems } from '../../api';
 import { AppLifecycleChanges } from '../../types/AppLifecycleChanges';
 import { SystemLifecycleChanges } from '../../types/SystemLifecycleChanges';
 const SelectOptionVariations = lazy(() => import('../FilterComponents/LifecycleDropdown'));
-const LifecycleChart = lazy(() => import('../../Components/LifecycleChart/lifecycleChart'));
+const LifecycleChart = lazy(() => import('../../Components/LifecycleChart/LifecycleChart'));
 const LifecycleFilters = lazy(() => import('../../Components/LifecycleFilters/LifecycleFilters'));
 const LifecycleTable = lazy(() => import('../../Components/LifecycleTable/lifecycleTable'));
 
 // Start = y0, end = y
-// const lifecycleChartData = [
-//   [{ x: 'RHEL 8.3', y0: new Date('2023-01'), y: new Date('2024-06'), packageType: 'Retired' }],
-//   [
-//     {
-//       x: 'RHEL 8.7',
-//       y0: new Date('2023-01'),
-//       y: new Date('2025-10'),
-//       packageType: 'Support ends within 6 months',
-//     },
-//   ],
-//   [{ x: 'RHEL 9.0', y0: new Date('2024-08'), y: new Date('2025-06'), packageType: 'Not installed' }],
-//   [{ x: 'RHEL 9.1', y0: new Date('2023-01'), y: new Date('2027-10'), packageType: 'Supported' }],
-// ];
+/*const lifecycleChartData = [
+  [{ x: 'RHEL 8.3', y0: new Date('2023-01'), y: new Date('2024-06'), packageType: 'Retired' }],
+  [
+    {
+      x: 'RHEL 8.7',
+      y0: new Date('2023-01'),
+      y: new Date('2025-10'),
+      packageType: 'Support ends within 6 months',
+    },
+  ],
+  [{ x: 'RHEL 9.0', y0: new Date('2024-08'), y: new Date('2025-06'), packageType: 'Not installed' }],
+  [{ x: 'RHEL 9.1', y0: new Date('2023-01'), y: new Date('2027-10'), packageType: 'Supported' }],
+];*/
 
 const DEFAULT_DROPDOWN_VALUE = 'RHEL 9 Application Streams';
 
@@ -63,12 +63,9 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
     if (value === DEFAULT_DROPDOWN_VALUE) {
       setFilteredTableData(appLifecycleChanges);
       setFilteredChartData(appLifecycleChanges);
-
-
     } else {
       setFilteredTableData(systemLifecycleChanges);
       setFilteredChartData(systemLifecycleChanges);
-
     }
   };
 
@@ -108,10 +105,12 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
       setSystemLifecycleChanges(updatedSystems);
       if (dropdownValue === DEFAULT_DROPDOWN_VALUE) {
         setFilteredTableData(appStreams);
-        setFilteredChartData(appStreams)
+        console.log('rebecca app');
+        console.log(appStreams);
+        setFilteredChartData(appStreams);
       } else {
         setFilteredTableData(updatedSystems);
-        setFilteredChartData(updatedSystems)
+        //setFilteredChartData(updatedSystems);
       }
     } catch (error) {
       console.error('Error fetching lifecycle changes:', error);
@@ -128,7 +127,6 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
   const filterData = (name: string) => {
     let currentDataSource: AppLifecycleChanges[] | SystemLifecycleChanges[] = [];
     if (nameFilter !== '') {
-
       if (dropdownValue === DEFAULT_DROPDOWN_VALUE) {
         currentDataSource = appLifecycleChanges.filter((datum) => {
           // also check for streams.stream value
@@ -141,14 +139,14 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
         });
       }
       setFilteredTableData(currentDataSource);
-      setFilteredChartData(currentDataSource);
+      //setFilteredChartData(currentDataSource);
     } else {
       if (dropdownValue === DEFAULT_DROPDOWN_VALUE) {
         setFilteredTableData(appLifecycleChanges);
-        setFilteredChartData(appLifecycleChanges);
+        //setFilteredChartData(appLifecycleChanges);
       } else {
         setFilteredTableData(systemLifecycleChanges);
-        setFilteredChartData(systemLifecycleChanges);
+        //setFilteredChartData(systemLifecycleChanges);
       }
     }
   };
@@ -159,10 +157,9 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
   };
 
   const resetFilters = () => {
-    setNameFilter(''); 
+    setNameFilter('');
     setFilteredTableData(systemLifecycleChanges);
-    setFilteredChartData(systemLifecycleChanges);
-   
+    //setFilteredChartData(systemLifecycleChanges);
   };
 
   if (isLoading) {
@@ -214,8 +211,8 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
       </EmptyState>
     </Bullseye>
   );
-  console.log(filteredChartData, "chart2")
-  console.log(filteredTableData, "chart2")
+  console.log(filteredChartData, 'chart2');
+  console.log(filteredTableData, 'chart2');
   const renderContent = () => {
     if (nameFilter !== '' && (filteredTableData.length === 0 || filteredChartData.length === 0)) {
       return emptyState;
