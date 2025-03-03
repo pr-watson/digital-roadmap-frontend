@@ -26,3 +26,11 @@ export function pluralize(i: number, singular: string, plural?: string) {
   }
   return `${i === 1 ? singular : plural}`;
 }
+
+export const decodeURIComponent = (queryParam: string, query:string) => {
+  switch(query) {
+    case 'page': {
+
+    }
+  }
+};
