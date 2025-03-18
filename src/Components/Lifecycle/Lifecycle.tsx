@@ -112,13 +112,17 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
     });
   };
 
+  const updateAppLifecycleData = (data: Stream[]) => {
+    return data.filter((stream) => stream.rolling===false && stream.os_major === 9);
+  };
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
       const systemData = await getLifecycleSystems();
       const appData = await getLifecycleAppstreams();
       const upcomingChangesParagraphs = systemData.data || [];
-      const appStreams = appData.data || [];
+      const appStreams = updateAppLifecycleData(appData.data) || [];
       setSystemLifecycleChanges(upcomingChangesParagraphs);
       setAppLifecycleChanges(appStreams);
       const updatedSystems = updateLifecycleData(upcomingChangesParagraphs);
@@ -219,7 +223,7 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
           Release: item.os_major,
           'Release date': formatDate(item.start_date),
           'Retirement date': formatDate(item.end_date),
-          Systems: 'N/A',
+          Systems: item.count,
         })
       );
     } else {
