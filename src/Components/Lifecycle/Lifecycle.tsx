@@ -22,7 +22,7 @@ import { AppLifecycleChanges } from '../../types/AppLifecycleChanges';
 import { SystemLifecycleChanges } from '../../types/SystemLifecycleChanges';
 import { Stream } from '../../types/Stream';
 import { useSearchParams } from 'react-router-dom';
-import { buildURL, checkValidityOfQueryParam } from '../../utils/utils';
+import { buildURL } from '../../utils/utils';
 import {
   DEFAULT_CHART_SORTBY_VALUE,
   DEFAULT_DROPDOWN_VALUE,
@@ -60,7 +60,7 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
   const [filteredChartData, setFilteredChartData] = useState<SystemLifecycleChanges[] | Stream[]>([]);
   const [appLifecycleChanges, setAppLifecycleChanges] = useState<Stream[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
-
+  
   // drop down menu
   const [lifecycleDropdownValue, setLifecycleDropdownValue] = React.useState<string>(DEFAULT_DROPDOWN_VALUE);
   const [chartSortByValue, setChartSortByValue] = React.useState<string>(DEFAULT_CHART_SORTBY_VALUE);
@@ -70,10 +70,6 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
 
   const updateChartSortValue = (value: string) => {
     setChartSortByValue(value);
-    const newFilters = structuredClone(filters);
-    newFilters['chartSortBy'] = value;
-    setFilters(newFilters);
-    setSearchParams(buildURL(newFilters));
     setFilteredChartData(filterChartData(filteredChartData, value));
   };
 
@@ -138,14 +134,7 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
       doInitialFilter(nameQueryParam, data, dropdownValue);
     } else {
       setFilteredTableData(data);
-      let chartData;
-      if (sortByParam && checkValidityOfQueryParam('sortByQueryParam', sortByParam)) {
-        chartData = filterChartData(data, sortByParam);
-        setChartSortByValue(sortByParam);
-      } else {
-        chartData = filterChartDataByRetirementDate(data, dropdownValue);
-      }
-      setFilteredChartData(chartData);
+      setFilteredChartData(filterChartDataByRetirementDate(data, dropdownValue));
     }
   };
 
@@ -182,7 +171,6 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
 
   const nameQueryParam = searchParams.get('name');
   const dropdownQueryParam = searchParams.get('lifecycleDropdown');
-  const sortByParam = searchParams.get('chartSortBy');
 
   useEffect(() => {
     fetchData();
@@ -245,14 +233,7 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
       });
     }
     setFilteredTableData(currentDataSource);
-    let chartData;
-
-    if (sortByParam && checkValidityOfQueryParam('sortByQueryParam', sortByParam)) {
-      chartData = filterChartData(currentDataSource, sortByParam);
-      setChartSortByValue(sortByParam);
-    } else {
-      chartData = filterChartData(currentDataSource, chartSortByValue);
-    }
+    const chartData = filterChartData(currentDataSource, chartSortByValue);
     setFilteredChartData(chartData);
     return currentDataSource;
   };
