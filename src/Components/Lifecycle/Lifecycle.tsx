@@ -183,7 +183,7 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
       if (lifecycleDropdownValue === DEFAULT_DROPDOWN_VALUE) {
         currentDataSource = appLifecycleChanges.filter((datum) => {
           // also check for stream value
-          return `${datum.name.toLowerCase()} ${datum.stream.toLowerCase()}`.includes(name.toLowerCase());
+          return `${datum.name.toLowerCase()}`.includes(name.toLowerCase());
         });
       } else {
         currentDataSource = systemLifecycleChanges.filter((datum) => {
