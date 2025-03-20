@@ -34,7 +34,7 @@ const LifecycleChart = lazy(() => import('../../Components/LifecycleChart/Lifecy
 const LifecycleFilters = lazy(() => import('../../Components/LifecycleFilters/LifecycleFilters'));
 const LifecycleTable = lazy(() => import('../../Components/LifecycleTable/LifecycleTable'));
 import { download, generateCsv, mkConfig } from 'export-to-csv';
-import { formatDate } from '../../utils/utils';
+import { formatDate, getLifecycleType, getNewName } from '../../utils/utils';
 
 interface Filter {
   name: string;
@@ -87,24 +87,6 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
     setFilters(newFilters);
   };
 
-  const getLifecycleType = (lifecycleType: string) => {
-    switch (lifecycleType) {
-      case 'EUS':
-        return ' EUS';
-      case 'ELS':
-        return ' ELS';
-      case 'E4S':
-        return ' for SAP';
-      default:
-        return '';
-    }
-  };
-
-  const getNewName = (name: string, major: number, minor: number, lifecycleType: string) => {
-    const lifecycleText = getLifecycleType(lifecycleType);
-    return `${name} ${major}.${minor}${lifecycleText}`;
-  };
-
   const updateLifecycleData = (data: SystemLifecycleChanges[]) => {
     return data.map((datum) => {
       datum.name = getNewName(datum.name, datum.major, datum.minor, datum.lifecycle_type);
@@ -113,7 +95,7 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
   };
 
   const updateAppLifecycleData = (data: Stream[]) => {
-    return data.filter((stream) => stream.rolling===false && stream.os_major === 9);
+    return data.filter((stream) => stream.rolling === false && stream.os_major === 9);
   };
 
   const fetchData = async () => {
@@ -187,7 +169,7 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
         });
       } else {
         currentDataSource = systemLifecycleChanges.filter((datum) => {
-          const product = `${datum.name.toLowerCase()} ${datum.major}.${datum.minor}`;
+          const product = `${datum.name.toLowerCase()}}`;
           return product.includes(name.toLowerCase());
         });
       }
