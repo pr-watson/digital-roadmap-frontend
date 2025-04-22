@@ -153,7 +153,9 @@ const LifecycleChart: React.FC<LifecycleChartProps> = ({
       (lifecycleData as SystemLifecycleChanges[]).forEach((item) => {
         if (
           item.release_date === 'Unknown' ||
-          item.retirement_date === 'Unknown'
+          item.retirement_date === 'Unknown' ||
+          item.release_date === null ||
+          item.retirement_date === null
         ) {
           return;
         }
