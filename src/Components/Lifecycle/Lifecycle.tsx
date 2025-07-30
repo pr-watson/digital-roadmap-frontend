@@ -92,7 +92,7 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
   const applyAllActiveFilters = (
     data: Stream[] | SystemLifecycleChanges[],
     dropdownValue: string,
-    nameFilterValue: string
+    nameFilterValue: string,
   ) => {
     let filteredData = data;
 
@@ -111,7 +111,8 @@ const LifecycleTab: React.FC<React.PropsWithChildren> = () => {
 
     setFilteredTableData(filteredData);
 
-    const chartData = filterChartData(filteredData, chartSortByValue, dropdownValue);
+    // Apply current chart sorting (maintain existing sort when switching dropdowns)
+    const chartData = filterChartData(filteredData, chartSortByValue, dropdownValue, chartDirection);
     setFilteredChartData(chartData);
 
     return filteredData;
