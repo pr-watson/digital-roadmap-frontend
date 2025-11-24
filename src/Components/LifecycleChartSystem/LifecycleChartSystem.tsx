@@ -5,11 +5,12 @@ import {
   ChartAxis,
   ChartBar,
   ChartGroup,
+  ChartLegend,
   ChartLine,
   ChartTooltip,
+  getInteractiveLegendEvents,
   getInteractiveLegendItemStyles,
 } from '@patternfly/react-charts/victory';
-import { VictoryLegend } from 'victory-legend';
 import { SystemLifecycleChanges } from '../../types/SystemLifecycleChanges';
 import { Stream } from '../../types/Stream';
 import { formatDate, mapSupportTypeToDisplayName } from '../../utils/utils';
@@ -242,21 +243,35 @@ const LifecycleChartSystem: React.FC<LifecycleChartProps> = ({
   };
 
   const legendNames = React.useMemo(calculateLegendNames, [updatedLifecycleData]);
+  const rawChartId = React.useId();
+  const chartId = React.useMemo(
+    () => `lifecycle-chart-${rawChartId.replace(/[^a-zA-Z0-9_-]/g, '_')}`,
+    [rawChartId]
+  );
+  const legendComponentName = `${chartId}-ChartLegend`;
+  const getSeriesName = (index: number) => `${chartId}-ChartBar-${index}`;
+  const chartNames = legendNames.map((_, index) => [getSeriesName(index)]) as [string[]];
+  const [hoveredLegendIndex, setHoveredLegendIndex] = React.useState<number | null>(null);
   const LEGEND_NAME_PREFIX = '\u00A0\u00A0\u00A0'; // Nonbreakable space - fix issue with legend hover spacing bug
 
   const getLegendData = () =>
-    legendNames.map((s, index) => ({
-      childName: `series-${index}`,
-      name: `${LEGEND_NAME_PREFIX}${s.packageType}`,
-      symbol: {
-        fill: `${getPackageColor(s.packageType)}`,
-        cursor: 'pointer',
-      },
-      labels: {
-        cursor: 'pointer',
-      },
-      ...getInteractiveLegendItemStyles(hiddenSeries.has(index)),
-    }));
+    legendNames.map((s, index) => {
+      const dimmed = hoveredLegendIndex !== null && hoveredLegendIndex !== index;
+      const interactiveStyles = getInteractiveLegendItemStyles(hiddenSeries.has(index));
+      return {
+        childName: getSeriesName(index),
+        name: `${LEGEND_NAME_PREFIX}${s.packageType}`,
+        symbol: {
+          fill: getPackageColor(s.packageType),
+          ...(dimmed && { opacity: 0.3 }),
+          ...interactiveStyles.symbol,
+        },
+        labels: {
+          ...(dimmed && { opacity: 0.3 }),
+          ...interactiveStyles.labels,
+        },
+      };
+    });
 
   const handleLegendClick = (props: { index: number }) => {
     setHiddenSeries((prevHiddenSeries) => {
@@ -334,64 +349,7 @@ const LifecycleChartSystem: React.FC<LifecycleChartProps> = ({
     return updatedLifecycleData.map((data) => data[0].x).filter((name) => visibleNames.has(name));
   };
 
-  // State for legend hover
-  const [hoveredLegendIndex, setHoveredLegendIndex] = React.useState<number | null>(null);
-
-  // Legend events that attach directly to VictoryLegend
-  const legendEventsForLegendComponent = React.useMemo(() => {
-    const events: any[] = [];
-
-    legendNames.forEach((_, legendIndex) => {
-      // Events for legend labels (text)
-      events.push({
-        target: 'labels',
-        eventKey: legendIndex,
-        eventHandlers: {
-          onMouseOver: () => {
-            console.log('Legend hover (System):', legendIndex);
-            setHoveredLegendIndex(legendIndex);
-            return [];
-          },
-          onMouseOut: () => {
-            console.log('Legend unhover (System):', legendIndex);
-            setHoveredLegendIndex(null);
-            return [];
-          },
-          onClick: () => {
-            console.log('Legend click (System):', legendIndex);
-            handleLegendClick({ index: legendIndex });
-            return [];
-          },
-        },
-      });
-
-      // Events for legend symbols
-      events.push({
-        target: 'data',
-        eventKey: legendIndex,
-        eventHandlers: {
-          onMouseOver: () => {
-            console.log('Legend symbol hover (System):', legendIndex);
-            setHoveredLegendIndex(legendIndex);
-            return [];
-          },
-          onMouseOut: () => {
-            console.log('Legend symbol unhover (System):', legendIndex);
-            setHoveredLegendIndex(null);
-            return [];
-          },
-          onClick: () => {
-            console.log('Legend symbol click (System):', legendIndex);
-            handleLegendClick({ index: legendIndex });
-            return [];
-          },
-        },
-      });
-    });
-
-    console.log('Legend events for VictoryLegend (System):', events.length, 'events');
-    return events;
-  }, [legendNames.length, hiddenSeries]);
+  const isHidden = (index: number) => hiddenSeries.has(index);
 
   // Function to position tooltip - always to the right of the bar
   const calculateTooltipPosition = (x: number): number => {
@@ -654,19 +612,60 @@ End: ${formatDate(tooltipData.y)}`;
       <Chart
         legendAllowWrap
         ariaDesc="Support timelines of packages and RHEL versions"
+        events={getInteractiveLegendEvents({
+          chartNames,
+          isHidden,
+          legendName: legendComponentName,
+          onLegendClick: handleLegendClick,
+        })}
         legendComponent={
-          <VictoryLegend
-            name="chart5-ChartLegend"
+          <ChartLegend
+            name={legendComponentName}
+            events={[
+              {
+                target: 'data',
+                eventHandlers: {
+                  onClick: (_event, props) => {
+                    handleLegendClick({ index: props.index });
+                    return [];
+                  },
+                  onMouseOver: (_event, props) => {
+                    setHoveredLegendIndex(props.index);
+                    return [];
+                  },
+                  onMouseOut: () => {
+                    setHoveredLegendIndex(null);
+                    return [];
+                  },
+                },
+              },
+              {
+                target: 'labels',
+                eventHandlers: {
+                  onClick: (_event, props) => {
+                    handleLegendClick({ index: props.index });
+                    return [];
+                  },
+                  onMouseOver: (_event, props) => {
+                    setHoveredLegendIndex(props.index);
+                    return [];
+                  },
+                  onMouseOut: () => {
+                    setHoveredLegendIndex(null);
+                    return [];
+                  },
+                },
+              },
+            ]}
+            symbolSpacer={1}
+            borderPadding={{ top: 12, bottom: 0, left: 10, right: 0 }}
             data={getLegendData()}
+            height={50}
             gutter={20}
-            events={legendEventsForLegendComponent}
-            style={{
-              labels: { cursor: 'pointer' },
-            }}
           />
         }
         legendPosition="bottom-left"
-        name="chart5"
+        name={chartId}
         padding={{
           bottom: 60, // Adjusted to accommodate legend
           left: leftPadding, // Dynamically calculated based on the longest name
@@ -716,17 +715,16 @@ End: ${formatDate(tooltipData.y)}`;
               <ChartBar
                 data={s.datapoints}
                 key={`bar-${index}`}
-                name={`series-${index}`}
+                name={getSeriesName(index)}
                 barWidth={10}
                 style={{
                   data: {
                     fill: getPackageColor(s.packageType),
                     stroke: getPackageColor(s.packageType),
-                    fillOpacity: hiddenSeries.has(index)
-                      ? 0.3
-                      : hoveredLegendIndex !== null && hoveredLegendIndex !== index
-                      ? 0.3
-                      : 1,
+                    fillOpacity:
+                      hiddenSeries.has(index) || (hoveredLegendIndex !== null && hoveredLegendIndex !== index)
+                        ? 0.3
+                        : 1,
                   },
                 }}
                 events={[
